@@ -1,6 +1,5 @@
 package vn.baodh.cassandra_cdc.core;
 
-import vn.baodh.cassandra_cdc.mutation.MutationInitiator;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
@@ -9,6 +8,7 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
+import vn.baodh.cassandra_cdc.mutation.MutationInitiator;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -44,7 +44,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
      * Handle an error during segment read, signaling whether you want the reader to skip the
      * remainder of the current segment on error.
      *
-     * @param exception CommitLogReadException w/details on exception state
+     * @param ex CommitLogReadException w/details on exception state
      *
      * @return boolean indicating whether to stop reading
      *
@@ -63,7 +63,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
      * In instances where we cannot recover from a specific error and don't care what the reader
      * thinks
      *
-     * @param exception CommitLogReadException w/details on exception state
+     * @param ex CommitLogReadException w/details on exception state
      *
      * @exception IOException
      */
@@ -84,21 +84,23 @@ public class CDCLogHandler implements CommitLogReadHandler {
      */
     @Override
     public void handleMutation(Mutation m, int size, int entryLocation, CommitLogDescriptor desc) {
-        if (DatabaseDescriptor.isCDCEnabled() && m.trackedByCDC()) sawCDCMutation = true;
-        log.info("[handler] handling mutation: {}", m);
+        if (DatabaseDescriptor.isCDCEnabled() && m.trackedByCDC()) {
+            log.info("[handler] handling cdc mutation: {}", m);
 
-        pendingMutationBytes += size;
-        futures.offer(mutationInitiator.initiateMutation(m, desc.id, size, entryLocation, this));
+            pendingMutationBytes += size;
+            futures.offer(
+                    mutationInitiator.initiateMutation(m, desc.id, size, entryLocation, this));
 
-        // If there are finished mutations, or too many outstanding bytes/mutations,
-        // drain the futures in the queue
-        while (futures.size() > MAX_OUTSTANDING_CDC_COUNT ||
-                       pendingMutationBytes > MAX_OUTSTANDING_CDC_BYTES ||
-                       (!futures.isEmpty() && futures.peek().isDone())) {
-            var future = futures.poll();
-            // Even if !futures.isEmpty() evaluates to true, futures.poll() could still return null because:
-            // The element was removed, and another thread may have cleared it or marked it as complete.
-            if (future != null) pendingMutationBytes -= FBUtilities.waitOnFuture(future);
+            // If there are finished mutations, or too many outstanding bytes/mutations,
+            // drain the futures in the queue
+            while (futures.size() > MAX_OUTSTANDING_CDC_COUNT ||
+                           pendingMutationBytes > MAX_OUTSTANDING_CDC_BYTES ||
+                           (!futures.isEmpty() && futures.peek().isDone())) {
+                var future = futures.poll();
+                // Even if !futures.isEmpty() evaluates to true, futures.poll() could still return null because:
+                // The element was removed, and another thread may have cleared it or marked it as complete.
+                if (future != null) pendingMutationBytes -= FBUtilities.waitOnFuture(future);
+            }
         }
     }
 
