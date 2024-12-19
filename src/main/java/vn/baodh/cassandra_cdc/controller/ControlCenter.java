@@ -45,7 +45,7 @@ public class ControlCenter {
             @RequestBody
             String path) {
         log.info("[control] read specified log file: {}", path);
-        reader.read(new File(Paths.get(path)));
+        reader.read(Paths.get(path));
         return ResponseEntity.ok(true);
     }
 
