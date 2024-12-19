@@ -1,4 +1,4 @@
-package com.fujitsu.fnc.vta.cassandra_cdc.core;
+package vn.baodh.cassandra_cdc.core;
 
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.CommitLogReader;
@@ -28,7 +28,7 @@ public class CDCLogReader {
         try {
             reader.readCommitLogSegment(handler, file, false);
         } catch (IOException e) {
-            log.error("[reader] error when reading cdc log segment: {}", file.absolutePath());
+            log.error("[reader] error when reading cdc log segment: {}", file.absolutePath(), e);
         }
     }
 

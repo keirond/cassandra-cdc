@@ -1,4 +1,4 @@
-package com.fujitsu.fnc.vta.cassandra_cdc;
+package vn.baodh.cassandra_cdc;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.fujitsu.fnc.vta.cassandra_cdc.common;
+package vn.baodh.cassandra_cdc.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;

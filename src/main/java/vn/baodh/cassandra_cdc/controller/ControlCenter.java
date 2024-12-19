@@ -1,6 +1,6 @@
-package com.fujitsu.fnc.vta.cassandra_cdc.controller;
+package vn.baodh.cassandra_cdc.controller;
 
-import com.fujitsu.fnc.vta.cassandra_cdc.core.CDCLogReader;
+import vn.baodh.cassandra_cdc.core.CDCLogReader;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.apache.cassandra.io.util.File;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,9 +43,9 @@ public class ControlCenter {
     @Operation(summary = "Read specified log file")
     public ResponseEntity<?> readLogFile(
             @RequestBody
-            Path path) {
-        log.info("[control] read specified log file");
-        reader.read(new File(path));
+            String path) {
+        log.info("[control] read specified log file: {}", path);
+        reader.read(new File(Paths.get(path)));
         return ResponseEntity.ok(true);
     }
 

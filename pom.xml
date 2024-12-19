@@ -9,17 +9,16 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.fujitsu.fnc.vta</groupId>
+    <groupId>vn.baodh</groupId>
     <artifactId>cassandra-cdc</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>cassandra-cdc</name>
-    <description>cassandra-cdc</description>
+    <name>Cassandra CDC</name>
 
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
 
-        <cassandra.version>5.0.2</cassandra.version>
+        <cassandra.version>5.0.0</cassandra.version>
     </properties>
     <dependencies>
 
