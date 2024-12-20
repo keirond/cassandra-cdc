@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 @Slf4j
 @Component
@@ -32,7 +33,7 @@ public class CDCLogReader {
 
     public void watch(Path cdcDirectory) {
         try (var watchService = cdcDirectory.getFileSystem().newWatchService()) {
-            var watchKey = cdcDirectory.register(watchService, ENTRY_CREATE);
+            var watchKey = cdcDirectory.register(watchService, ENTRY_MODIFY);
 
             log.info("[reader] watching for directory: {}, watch key: {}", cdcDirectory, watchKey);
             running.set(true);
@@ -40,13 +41,14 @@ public class CDCLogReader {
                 var key = watchService.take();
                 for (var event : key.pollEvents()) {
                     var kind = event.kind();
-                    if (kind != ENTRY_CREATE) continue;
+                    log.info("[testing] watch event context: {}, kind: {}", event.context(), kind);
+                    if (kind != ENTRY_MODIFY) continue;
                     var relativePath = (Path) event.context();
-                    var absolutePath = cdcDirectory.resolve(relativePath);
+                    var absolutePath = cdcDirectory.resolve(relativePath).toString().replace("_cdc.idx", ".log");
                     var file = new File(absolutePath);
                     if (CommitLogDescriptor.isValid(file.name())) {
                         read(file);
-                        Files.deleteIfExists(absolutePath);
+//                        Files.deleteIfExists(absolutePath);
                     }
                 }
                 watchKey.reset();

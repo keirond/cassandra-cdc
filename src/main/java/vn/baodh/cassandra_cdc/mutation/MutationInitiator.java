@@ -35,6 +35,8 @@ public class MutationInitiator {
                     return;
                 }
 
+                log.info("[testing] {}", m);
+
                 for (var update : m.getPartitionUpdates()) { // TODO filter mutation
                     if (Schema.instance.getTableMetadata(update.metadata().id) == null) {
                         log.error("[mutation] table {} is not found or not loaded",
