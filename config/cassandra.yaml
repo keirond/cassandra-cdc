@@ -252,7 +252,7 @@ cidr_authorizer:
     # Refresh interval for CIDR groups cache, this value is considered in minutes
     # cidr_groups_cache_refresh_interval: 5
 
-    # Maximum number of entries an IP to CIDR groups cache can accommodate
+  # Maximum number of entries an IP to CIDR groups cache can accommodate
   # ip_cache_max_size: 100
 
 # Depending on the auth strategy of the cluster, it can be beneficial to iterate
@@ -384,7 +384,7 @@ commitlog_directory: /home/baodh/cdc-lab/cassandra-data/commitlog
 # Enable / disable CDC functionality on a per-node basis. This modifies the logic used
 # for write path allocation rejection (standard: never reject. cdc: reject Mutation
 # containing a CDC-enabled table if at space limit in cdc_raw_directory).
-cdc_enabled: false
+cdc_enabled: true
 
 # Specify whether writes to the CDC-enabled tables should be blocked when CDC data on disk has reached to the limit.
 # When setting to false, the writes will not be blocked and the oldest CDC data on disk will be deleted to
@@ -402,7 +402,7 @@ cdc_enabled: false
 # segment contains mutations for a CDC-enabled table. This should be placed on a
 # separate spindle than the data directories. If not set, the default directory is
 # $CASSANDRA_HOME/data/cdc_raw.
-# cdc_raw_directory: /home/baodh/cdc-lab/cassandra-data/cdc_raw
+cdc_raw_directory: /home/baodh/cdc-lab/cassandra-data/cdc_raw
 
 # Policy for accessing disk:
 #
@@ -894,13 +894,13 @@ memtable_allocation_type: heap_buffers
 # The default value is the min of 4096 MiB and 1/8th of the total space
 # of the drive where cdc_raw_directory resides.
 # Min unit: MiB
-# cdc_total_space: 4096MiB
+cdc_total_space: 4096MiB
 
 # When we hit our cdc_raw limit and the CDCCompactor is either running behind
 # or experiencing backpressure, we check at the following interval to see if any
 # new space for cdc-tracked tables has been made available. Default to 250ms
 # Min unit: ms
-# cdc_free_space_check_interval: 250ms
+cdc_free_space_check_interval: 250ms
 
 # A fixed memory pool size in MB for for SSTable index summaries. If left
 # empty, this will default to 5% of the heap size. If the memory usage of

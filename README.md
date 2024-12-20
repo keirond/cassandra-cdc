@@ -8,3 +8,7 @@
     - It centralizes the definitions of keyspaces, tables, and their associated metadata, acting as the in-memory
       representation of the database schema.
 - `PartitionUpdate`: 
+
+----
+### TODO
+- Need to trigger Schema load a new keyspace & table while running.
