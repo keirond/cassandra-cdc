@@ -26,7 +26,6 @@ public class MutationInitiator {
             @Override
             protected void runMayThrow() {
                 var finalizedData = new ArrayList<Map<String, Object>>();
-                log.info("[mutation] handling mutation: {}", m);
 
                 Keyspace.open(m.getKeyspaceName());
                 if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) {
@@ -36,9 +35,6 @@ public class MutationInitiator {
                 }
 
                 for (var update : m.getPartitionUpdates()) { // TODO filter mutation
-                    log.info("[mutation] handling update: {}, table_id: {}", update,
-                            update.metadata().id);
-
                     if (Schema.instance.getTableMetadata(update.metadata().id) == null) {
                         log.error("[mutation] table {} is not found or not loaded",
                                 update.metadata().id);
@@ -47,19 +43,12 @@ public class MutationInitiator {
 
                     var position = new CommitLogPosition(segmentId, entryLocation);
                     if (handler.shouldRead(update.metadata().id, position)) {
-                        log.info("[mutation] handling this update: {}, at the position: {}", update,
+                        log.info("[mutation] handling this update: {}, at the position: {}", update.metadata().id,
                                 position);
-                        log.info("[testing] update: {}, columns: {}", update,
-                                update.metadata().columns());
 
                         for (var row : update) {
-                            log.info("[testing] row: {}", row);
                             var map = new HashMap<String, Object>();
                             for (var cell : row.cells()) {
-                                log.info("[testing] column is simple: {}",
-                                        cell.column().isSimple());
-                                log.info("[testing] timestamp: {}", cell.timestamp());
-
                                 var col = cell.column();
                                 map.put("keyspace", col.ksName);
                                 map.put("table", col.cfName);
@@ -72,7 +61,7 @@ public class MutationInitiator {
                     }
                 }
 
-                log.info("[mutation] final data: {}", JsonMapper.toJson(finalizedData));
+                log.info("[mutation] handled mutation data: {}", JsonMapper.toJson(finalizedData));
 
             }
         };
