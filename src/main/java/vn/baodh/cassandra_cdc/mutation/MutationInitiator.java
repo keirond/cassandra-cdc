@@ -23,6 +23,8 @@ public class MutationInitiator {
             protected void runMayThrow() {
                 log.info("[mutation] handling mutation: {}", m);
 
+                log.info("[testing] {}", Schema.instance.getKeyspaces());
+
                 if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) {
                     log.error("[mutation] keyspace {} is not found or not loaded",
                             m.getKeyspaceName());
