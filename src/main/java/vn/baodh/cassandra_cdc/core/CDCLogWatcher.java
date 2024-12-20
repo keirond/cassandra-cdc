@@ -23,9 +23,6 @@ public class CDCLogWatcher {
 
     @PostConstruct
     public void init() {
-        System.setProperty(Config.PROPERTY_PREFIX + "config.loader",
-                CDCConfigLoader.class.getName());
-
         DatabaseDescriptor.toolInitialization();
 
         if (!DatabaseDescriptor.isCDCEnabled()) {
