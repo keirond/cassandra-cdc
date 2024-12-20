@@ -4,7 +4,6 @@ import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.schema.Schema;
 import org.springframework.stereotype.Component;
@@ -12,11 +11,15 @@ import vn.baodh.cassandra_cdc.configuration.CDCConfiguration;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CDCLogWatcher {
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final CDCConfiguration configuration;
 
@@ -37,14 +40,15 @@ public class CDCLogWatcher {
         //        log.info(Schema.instance.getKeyspaces().toString());
 
         var path = configuration.getLogPath();
-        var cdcLocation = StringUtils.isEmpty(path) ? Paths.get(DatabaseDescriptor.getCDCLogLocation())
-                                         : Paths.get(path);
+        var cdcLocation =
+                StringUtils.isEmpty(path) ? Paths.get(DatabaseDescriptor.getCDCLogLocation())
+                                          : Paths.get(path);
         if (Files.notExists(cdcLocation)) {
             log.error("[watcher] CDC log location doesn't exist: {}", cdcLocation);
             return;
         }
 
-        if (Files.isDirectory(cdcLocation)) reader.watch(cdcLocation);
+        if (Files.isDirectory(cdcLocation)) executor.execute(() -> reader.watch(cdcLocation));
         else reader.read(cdcLocation);
     }
 
