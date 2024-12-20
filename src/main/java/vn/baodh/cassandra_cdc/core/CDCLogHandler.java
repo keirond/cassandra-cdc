@@ -118,7 +118,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
     }
 
     public boolean shouldRead(TableId id, CommitLogPosition position) {
-        if (!clpPersisted.get(id).contains(position)) {
+        if (!clpPersisted.containsKey(id) || !clpPersisted.get(id).contains(position)) {
             clpPersisted.put(id, new IntervalSet<>(CommitLogPosition.NONE, position));
             return true;
         }

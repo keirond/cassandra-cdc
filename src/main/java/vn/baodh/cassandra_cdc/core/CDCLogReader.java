@@ -72,7 +72,4 @@ public class CDCLogReader {
                     reader.getInvalidMutations());
         }
     }
-
-    public void shouldRead()
-
 }
