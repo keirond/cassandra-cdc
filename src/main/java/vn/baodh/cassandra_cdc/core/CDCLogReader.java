@@ -1,10 +1,9 @@
 package vn.baodh.cassandra_cdc.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.CommitLogReader;
 import org.apache.cassandra.io.util.File;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,10 +13,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
+@Slf4j
 @Component
 public class CDCLogReader {
-
-    private final Logger log = LogManager.getLogger(this.getClass());
 
     private final AtomicBoolean running;
 
@@ -25,7 +23,7 @@ public class CDCLogReader {
 
     private final CommitLogReadHandler handler;
 
-    public CDCLogReader(CommitLogReadHandler handler) {
+    public CDCLogReader(CDCLogHandler handler) {
         this.running = new AtomicBoolean(false);
         this.reader  = new CommitLogReader();
         this.handler = handler;
@@ -42,7 +40,6 @@ public class CDCLogReader {
                 for (var event : key.pollEvents()) {
                     var kind = event.kind();
                     if (kind != ENTRY_CREATE) continue;
-
                     var relativePath = (Path) event.context();
                     var absolutePath = cdcDirectory.resolve(relativePath);
                     read(absolutePath);
@@ -58,13 +55,10 @@ public class CDCLogReader {
         }
     }
 
-    public void watch(File file) {}
-
     // TODO: CommitLogPosition position
     public void read(Path absolutePath) {
         try {
-            var file = new File(absolutePath);
-            reader.readCommitLogSegment(handler, file, false);
+            reader.readCommitLogSegment(handler, new File(absolutePath), false);
         } catch (IOException ex) {
             log.error("[reader] error when reading cdc log segment: {}", absolutePath, ex);
         } finally {
