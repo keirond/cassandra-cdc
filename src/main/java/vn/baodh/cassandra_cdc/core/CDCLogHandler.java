@@ -85,6 +85,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
     @Override
     public void handleMutation(Mutation m, int size, int entryLocation, CommitLogDescriptor desc) {
         if (DatabaseDescriptor.isCDCEnabled() && m.trackedByCDC()) {
+            log.info("=======================================================");
             log.info("[handler] handling cdc mutation: {}", m);
 
             pendingMutationBytes += size;
