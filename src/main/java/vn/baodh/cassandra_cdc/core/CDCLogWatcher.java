@@ -1,5 +1,6 @@
 package vn.baodh.cassandra_cdc.core;
 
+import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class CDCLogWatcher {
         //        log.info(Schema.instance.getKeyspaces().toString());
 
         var path = configuration.getLogPath();
-        var cdcLocation = path.isBlank() ? Paths.get(DatabaseDescriptor.getCDCLogLocation())
+        var cdcLocation = StringUtils.isEmpty(path) ? Paths.get(DatabaseDescriptor.getCDCLogLocation())
                                          : Paths.get(path);
         if (Files.notExists(cdcLocation)) {
             log.error("[watcher] CDC log location doesn't exist: {}", cdcLocation);
