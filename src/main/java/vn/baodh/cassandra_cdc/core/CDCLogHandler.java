@@ -3,7 +3,10 @@ package vn.baodh.cassandra_cdc.core;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
+import org.apache.cassandra.db.commitlog.CommitLogPosition;
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
+import org.apache.cassandra.db.commitlog.IntervalSet;
+import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,8 +15,11 @@ import vn.baodh.cassandra_cdc.mutation.MutationInitiator;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class CDCLogHandler implements CommitLogReadHandler {
@@ -32,12 +38,18 @@ public class CDCLogHandler implements CommitLogReadHandler {
 
     private final Queue<Future<Integer>> futures;
 
+    private final Map<TableId, IntervalSet<CommitLogPosition>> clpPersisted;
+
+    private final AtomicInteger readCount;
+
     public CDCLogHandler(MutationInitiator mutationInitiator) {
         this.mutationInitiator = mutationInitiator;
 
         this.sawCDCMutation       = false;
         this.pendingMutationBytes = 0;
         this.futures              = new ArrayDeque<>();
+        this.clpPersisted         = new HashMap<>();
+        this.readCount            = new AtomicInteger(0);
     }
 
     /**
@@ -103,6 +115,18 @@ public class CDCLogHandler implements CommitLogReadHandler {
                 if (future != null) pendingMutationBytes -= FBUtilities.waitOnFuture(future);
             }
         }
+    }
+
+    public boolean shouldRead(TableId id, CommitLogPosition position) {
+        if (!clpPersisted.get(id).contains(position)) {
+            clpPersisted.put(id, new IntervalSet<>(CommitLogPosition.NONE, position));
+            return true;
+        }
+        return false;
+    }
+
+    public void increaseReadCount() {
+        readCount.incrementAndGet();
     }
 
 }

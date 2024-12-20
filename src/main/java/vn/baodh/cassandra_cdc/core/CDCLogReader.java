@@ -1,14 +1,19 @@
 package vn.baodh.cassandra_cdc.core;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.cassandra.db.commitlog.CommitLogPosition;
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.CommitLogReader;
+import org.apache.cassandra.db.commitlog.IntervalSet;
 import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.schema.TableId;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -18,6 +23,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 public class CDCLogReader {
 
     private final AtomicBoolean running;
+
 
     private final CommitLogReader reader;
 
@@ -66,5 +72,7 @@ public class CDCLogReader {
                     reader.getInvalidMutations());
         }
     }
+
+    public void shouldRead()
 
 }

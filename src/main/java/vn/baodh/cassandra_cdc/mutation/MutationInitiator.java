@@ -5,16 +5,23 @@ import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogPosition;
+import org.apache.cassandra.db.commitlog.IntervalSet;
 import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.WrappedRunnable;
 import org.springframework.stereotype.Component;
 import vn.baodh.cassandra_cdc.core.CDCLogHandler;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
 public class MutationInitiator {
+
+
 
     public Future<Integer> initiateMutation(Mutation m, long segmentId, int size, int entryLocation,
             CDCLogHandler handler) {
@@ -23,18 +30,18 @@ public class MutationInitiator {
             protected void runMayThrow() {
                 log.info("[mutation] handling mutation: {}", m);
 
-                log.info("[testing] {}", Schema.instance.getKeyspaces());
-
+                final var keyspace = Keyspace.open(m.getKeyspaceName());
                 if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) {
                     log.error("[mutation] keyspace {} is not found or not loaded",
                             m.getKeyspaceName());
                     return;
                 }
-                final var keyspace = Keyspace.open(m.getKeyspaceName());
-                //
-                //                Mutation.PartitionUpdateCollector newPUCollector = null;
+
+//                Mutation.PartitionUpdateCollector newPUCollector = null;
                 for (var update : m.getPartitionUpdates()) { // TODO filter mutation
-                    log.info("[mutation] handling update: {}", update);
+                    log.info("[mutation] handling update: {}, table_id: {}", update,
+                            update.metadata().id);
+
                     if (Schema.instance.getTableMetadata(update.metadata().id) == null) {
                         log.error("[mutation] table {} is not found or not loaded",
                                 update.metadata().id);
@@ -42,13 +49,32 @@ public class MutationInitiator {
                     }
 
                     var position = new CommitLogPosition(segmentId, entryLocation);
+                    if (handler.shouldRead(update.metadata().id, position)) {
 
-                    log.info("[mutation] handling at position: {}", position);
+//                        if (newPUCollector == null) newPUCollector =
+//                                                            new Mutation.PartitionUpdateCollector(
+//                                                                    m.getKeyspaceName(), m.key());
+
+//                        newPUCollector.add(update);
+                        log.info("[mutation] handling this update: {}, at the position: {}", update, position);
+                        handler.increaseReadCount();
+                    }
+
+//                    if (newPUCollector != null)
+//                    {
+//                        assert !newPUCollector.isEmpty();
+//
+//                        Keyspace.open(newPUCollector.getKeyspaceName()).apply(newPUCollector.build(), false, true, false);
+//                        handler.keyspacesReplayed.add(keyspace);
+//                    }
+
                 }
 
             }
         };
         return Stage.MUTATION.submit(runnable, size);
     }
+
+
 
 }
