@@ -1,7 +1,6 @@
 package vn.baodh.cassandra_cdc.mutation;
 
 import lombok.extern.slf4j.Slf4j;
-import vn.baodh.cassandra_cdc.core.CDCLogHandler;
 import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.Mutation;
@@ -9,6 +8,7 @@ import org.apache.cassandra.db.commitlog.CommitLogPosition;
 import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.utils.WrappedRunnable;
 import org.springframework.stereotype.Component;
+import vn.baodh.cassandra_cdc.core.CDCLogHandler;
 
 import java.util.concurrent.Future;
 
@@ -16,33 +16,36 @@ import java.util.concurrent.Future;
 @Component
 public class MutationInitiator {
 
-    public Future<Integer> initiateMutation(Mutation m, long segmentId, int size,
-            int entryLocation, CDCLogHandler handler) {
+    public Future<Integer> initiateMutation(Mutation m, long segmentId, int size, int entryLocation,
+            CDCLogHandler handler) {
         var runnable = new WrappedRunnable() {
             @Override
             protected void runMayThrow() {
-                log.info("[mutation] handling: {}", m);
-//                if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) return;
-//                var keyspace = Keyspace.open(m.getKeyspaceName());
-//
-//                Mutation.PartitionUpdateCollector newPUCollector = null;
-//                for (var update : m.getPartitionUpdates()) { // TODO filter mutation
-//                    if (Schema.instance.getTableMetadata(update.metadata().id) == null) continue;
-//
-//                    var position = new CommitLogPosition(segmentId, entryLocation);
-//                    if (newPUCollector != null) {
-//
-//                        // throw AssertionError if the collector is empty.
-//                        assert !newPUCollector.isEmpty();
-//
-//                        Keyspace.open(newPUCollector.getKeyspaceName())
-//                                .apply(newPUCollector.build(), false, true, false);
-//
-//                    }
-//                }
+                log.info("[mutation] handling mutation: {}", m);
+
+                if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) {
+                    log.error("[mutation] keyspace {} is not found or not loaded",
+                            m.getKeyspaceName());
+                    return;
+                }
+                final var keyspace = Keyspace.open(m.getKeyspaceName());
+                //
+                //                Mutation.PartitionUpdateCollector newPUCollector = null;
+                for (var update : m.getPartitionUpdates()) { // TODO filter mutation
+                    log.info("[mutation] handling update: {}", update);
+                    if (Schema.instance.getTableMetadata(update.metadata().id) == null) {
+                        log.error("[mutation] table {} is not found or not loaded",
+                                update.metadata().id);
+                        continue; // dropped
+                    }
+
+                    var position = new CommitLogPosition(segmentId, entryLocation);
+
+                    log.info("[mutation] handling at position: {}", position);
+                }
+
             }
         };
-
         return Stage.MUTATION.submit(runnable, size);
     }
 
