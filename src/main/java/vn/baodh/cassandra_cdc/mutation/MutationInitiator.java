@@ -2,6 +2,7 @@ package vn.baodh.cassandra_cdc.mutation;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.concurrent.Stage;
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogPosition;

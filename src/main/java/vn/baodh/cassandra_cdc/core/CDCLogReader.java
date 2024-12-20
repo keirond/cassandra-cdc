@@ -1,19 +1,15 @@
 package vn.baodh.cassandra_cdc.core;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.cassandra.db.commitlog.CommitLogPosition;
+import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.CommitLogReader;
-import org.apache.cassandra.db.commitlog.IntervalSet;
 import org.apache.cassandra.io.util.File;
-import org.apache.cassandra.schema.TableId;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -23,7 +19,6 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 public class CDCLogReader {
 
     private final AtomicBoolean running;
-
 
     private final CommitLogReader reader;
 
@@ -48,8 +43,11 @@ public class CDCLogReader {
                     if (kind != ENTRY_CREATE) continue;
                     var relativePath = (Path) event.context();
                     var absolutePath = cdcDirectory.resolve(relativePath);
-                    read(absolutePath);
-                    Files.deleteIfExists(absolutePath);
+                    var file = new File(absolutePath);
+                    if (CommitLogDescriptor.isValid(file.name())) {
+                        read(file);
+                        Files.deleteIfExists(absolutePath);
+                    }
                 }
                 watchKey.reset();
             }
@@ -61,15 +59,20 @@ public class CDCLogReader {
         }
     }
 
-    // TODO: CommitLogPosition position
     public void read(Path absolutePath) {
+        read(new File(absolutePath));
+    }
+
+    // TODO: CommitLogPosition position
+    public void read(File file) {
         try {
-            reader.readCommitLogSegment(handler, new File(absolutePath), false);
+            reader.readCommitLogSegment(handler, file, false);
         } catch (IOException ex) {
-            log.error("[reader] error when reading cdc log segment: {}", absolutePath, ex);
+            log.error("[reader] error when reading cdc log segment: {}", file.absolutePath(), ex);
         } finally {
             if (!reader.getInvalidMutations().isEmpty()) log.error("[reader] invalid mutations: {}",
                     reader.getInvalidMutations());
         }
     }
+
 }
