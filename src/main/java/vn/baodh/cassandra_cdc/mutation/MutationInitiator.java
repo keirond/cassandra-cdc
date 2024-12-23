@@ -2,7 +2,6 @@ package vn.baodh.cassandra_cdc.mutation;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.concurrent.Stage;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogPosition;
@@ -46,8 +45,8 @@ public class MutationInitiator {
 
                     var position = new CommitLogPosition(segmentId, entryLocation);
                     if (handler.shouldRead(update.metadata().id, position)) {
-                        log.info("[mutation] handling an update: {}, at position: {}", update.metadata().id,
-                                position);
+                        log.info("[mutation] handling an update: {}, at position: {}",
+                                update.metadata().id, position);
 
                         for (var row : update) {
                             var map = new HashMap<String, Object>();
