@@ -113,7 +113,8 @@ public class CDCLogHandler implements CommitLogReadHandler {
         if (!clpPersisted.containsKey(id) || !clpPersisted.get(id).contains(position)) {
             clpPersisted.put(id, new IntervalSet<>(CommitLogPosition.NONE, position));
             if (CDCLogReader.commitLogPosition.compareTo(position) < 0) {
-                CDCLogReader.commitLogPosition = position;
+                CDCLogReader.commitLogPosition =
+                        new CommitLogPosition(position.segmentId, position.position + 1);
             }
             return true;
         }

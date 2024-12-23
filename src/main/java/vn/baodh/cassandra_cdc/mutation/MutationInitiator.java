@@ -34,7 +34,7 @@ public class MutationInitiator {
                     return;
                 }
 
-                log.info("[testing] {}", m);
+                log.debug("[testing] {}", m);
 
                 for (var update : m.getPartitionUpdates()) { // TODO filter mutation
                     if (Schema.instance.getTableMetadata(update.metadata().id) == null) {
