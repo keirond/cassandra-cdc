@@ -2,6 +2,7 @@ package vn.baodh.cassandra_cdc.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
+import org.apache.cassandra.db.commitlog.CommitLogPosition;
 import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.CommitLogReader;
 import org.apache.cassandra.io.util.File;
@@ -12,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 @Slf4j
@@ -24,6 +24,8 @@ public class CDCLogReader {
     private final CommitLogReader reader;
 
     private final CommitLogReadHandler handler;
+
+    public static CommitLogPosition commitLogPosition = CommitLogPosition.NONE;
 
     public CDCLogReader(CDCLogHandler handler) {
         this.running = new AtomicBoolean(false);
@@ -41,14 +43,16 @@ public class CDCLogReader {
                 var key = watchService.take();
                 for (var event : key.pollEvents()) {
                     var kind = event.kind();
-                    log.info("[testing] watch event context: {}, kind: {}", event.context(), kind);
+                    log.info("[reader] watch event context: {}, kind: {}", event.context(), kind);
                     if (kind != ENTRY_MODIFY) continue;
                     var relativePath = (Path) event.context();
-                    var absolutePath = cdcDirectory.resolve(relativePath).toString().replace("_cdc.idx", ".log");
+                    var absolutePath = cdcDirectory.resolve(relativePath).toString()
+                                               .replace("_cdc.idx", ".log");
                     var file = new File(absolutePath);
-                    if (CommitLogDescriptor.isValid(file.name())) {
+                    if (CommitLogDescriptor.isValid(file.name()) && Files.exists(file.toPath())) {
                         read(file);
-//                        Files.deleteIfExists(absolutePath);
+                    } else {
+                        log.error("[reader] cdc log file {} is not exists", absolutePath);
                     }
                 }
                 watchKey.reset();
@@ -65,10 +69,9 @@ public class CDCLogReader {
         read(new File(absolutePath));
     }
 
-    // TODO: CommitLogPosition position
     public void read(File file) {
         try {
-            reader.readCommitLogSegment(handler, file, false);
+            reader.readCommitLogSegment(handler, file, commitLogPosition, false);
         } catch (IOException ex) {
             log.error("[reader] error when reading cdc log segment: {}", file.absolutePath(), ex);
         } finally {

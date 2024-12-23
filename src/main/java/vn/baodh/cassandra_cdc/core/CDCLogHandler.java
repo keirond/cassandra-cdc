@@ -1,5 +1,6 @@
 package vn.baodh.cassandra_cdc.core;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
@@ -8,8 +9,6 @@ import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
 import org.apache.cassandra.db.commitlog.IntervalSet;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.FBUtilities;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 import vn.baodh.cassandra_cdc.mutation.MutationInitiator;
 
@@ -21,18 +20,15 @@ import java.util.Queue;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 @Component
 public class CDCLogHandler implements CommitLogReadHandler {
-
-    private final Logger log = LogManager.getLogger(this.getClass());
 
     private static final long MAX_OUTSTANDING_CDC_BYTES = 1024 * 1024 * 64;
 
     private static final int MAX_OUTSTANDING_CDC_COUNT = 1024;
 
     private final MutationInitiator mutationInitiator;
-
-    private boolean sawCDCMutation;
 
     private long pendingMutationBytes;
 
@@ -45,7 +41,6 @@ public class CDCLogHandler implements CommitLogReadHandler {
     public CDCLogHandler(MutationInitiator mutationInitiator) {
         this.mutationInitiator = mutationInitiator;
 
-        this.sawCDCMutation       = false;
         this.pendingMutationBytes = 0;
         this.futures              = new ArrayDeque<>();
         this.clpPersisted         = new HashMap<>();
@@ -117,6 +112,9 @@ public class CDCLogHandler implements CommitLogReadHandler {
     public boolean shouldRead(TableId id, CommitLogPosition position) {
         if (!clpPersisted.containsKey(id) || !clpPersisted.get(id).contains(position)) {
             clpPersisted.put(id, new IntervalSet<>(CommitLogPosition.NONE, position));
+            if (CDCLogReader.commitLogPosition.compareTo(position) < 0) {
+                CDCLogReader.commitLogPosition = position;
+            }
             return true;
         }
         return false;

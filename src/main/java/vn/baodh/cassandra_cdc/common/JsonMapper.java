@@ -8,9 +8,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.boot.jackson.JsonComponentModule;
 
 import java.util.Optional;
@@ -18,9 +17,8 @@ import java.util.Optional;
 /**
  * A utility class for converting objects to JSON strings and vice versa using Jackson.
  */
+@Slf4j
 public class JsonMapper {
-
-    private static final Logger log = LogManager.getLogger(JsonMapper.class);
 
     private static final ObjectMapper objectMapper;
 
