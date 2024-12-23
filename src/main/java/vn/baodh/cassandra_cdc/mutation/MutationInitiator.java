@@ -46,7 +46,7 @@ public class MutationInitiator {
 
                     var position = new CommitLogPosition(segmentId, entryLocation);
                     if (handler.shouldRead(update.metadata().id, position)) {
-                        log.info("[mutation] handling this update: {}, at the position: {}", update.metadata().id,
+                        log.info("[mutation] handling an update: {}, at position: {}", update.metadata().id,
                                 position);
 
                         for (var row : update) {
