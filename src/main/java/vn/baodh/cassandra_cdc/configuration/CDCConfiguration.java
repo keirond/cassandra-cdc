@@ -8,6 +8,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import vn.baodh.cassandra_cdc.core.CDCConfigLoader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @Configuration
@@ -17,6 +20,8 @@ public class CDCConfiguration {
     private String configClassLoader = CDCConfigLoader.class.getName();
 
     private String logPath;
+
+    private List<String> tableIncludes = new ArrayList<>();
 
     @PostConstruct
     public void init() {

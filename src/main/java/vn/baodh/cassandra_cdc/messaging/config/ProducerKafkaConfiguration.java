@@ -22,7 +22,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "messaging.kafka.client.producer")
+@ConfigurationProperties(prefix = "messaging.client.producer")
 @SuppressWarnings("java:S1068")
 public class ProducerKafkaConfiguration {
 

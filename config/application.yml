@@ -1,3 +1,27 @@
 spring:
   application:
     name: Cassandra CDC
+
+cassandra:
+  cdc:
+    log-path: /home/baodh/cdc-lab/cassandra-data/cdc_raw
+    table-includes:
+      - alarm
+
+# Messaging
+messaging:
+  client:
+    ## Producer
+    producer:
+      bootstrap-servers: 10.20.3.62:9092
+      acks: all
+      linger-ms: 5
+      retries: 3
+      retry-backoff-ms: 100
+      enable-idempotence: true
+
+  ## Produce
+  producers:
+    internal:
+      alarm-data:
+        topic: cassandra-cdc.post.alarm-data
