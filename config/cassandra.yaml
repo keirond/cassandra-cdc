@@ -389,7 +389,7 @@ cdc_enabled: true
 # Specify whether writes to the CDC-enabled tables should be blocked when CDC data on disk has reached to the limit.
 # When setting to false, the writes will not be blocked and the oldest CDC data on disk will be deleted to
 # ensure the size constraint. The default is true.
-# cdc_block_writes: true
+cdc_block_writes: false
 
 # Specify whether CDC mutations are replayed through the write path on streaming, e.g. repair.
 # When enabled, CDC data streamed to the destination node will be written into commit log first. When setting to false,
