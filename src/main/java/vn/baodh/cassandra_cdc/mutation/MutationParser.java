@@ -16,15 +16,13 @@ import vn.baodh.cassandra_cdc.configuration.CDCConfiguration;
 import vn.baodh.cassandra_cdc.core.CDCLogHandler;
 import vn.baodh.cassandra_cdc.messaging.producer.StandardProducer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Future;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MutationInitiator {
+public class MutationParser {
 
     private final CDCConfiguration cdcConfiguration;
 
@@ -33,13 +31,15 @@ public class MutationInitiator {
     @Value("${messaging.producers.internal.alarm-data.topic}")
     private String alarmTopic;
 
-    public Future<Integer> initiateMutation(Mutation m, long segmentId, int size, int entryLocation, CDCLogHandler handler) {
+    public Future<Integer> handleMutation(Mutation m, long segmentId, int size, int entryLocation,
+            CDCLogHandler handler) {
         var runnable = new WrappedRunnable() {
             @Override
             protected void runMayThrow() {
                 Keyspace.open(m.getKeyspaceName());
                 if (Schema.instance.getKeyspaceInstance(m.getKeyspaceName()) == null) {
-                    log.error("[mutation] keyspace {} is not found or not loaded", m.getKeyspaceName());
+                    log.error("[mutation] keyspace {} is not found or not loaded",
+                            m.getKeyspaceName());
                     return;
                 }
 
@@ -48,7 +48,8 @@ public class MutationInitiator {
                 for (var update : m.getPartitionUpdates()) { // TODO filter mutation
                     var tableMetadata = Schema.instance.getTableMetadata(update.metadata().id);
                     if (tableMetadata == null) {
-                        log.error("[mutation] table {} is not found or not loaded", update.metadata().id);
+                        log.error("[mutation] table {} is not found or not loaded",
+                                update.metadata().id);
                         continue; // dropped
                     }
                     if (!cdcConfiguration.getTableIncludes().contains(tableMetadata.name)) {
@@ -56,17 +57,20 @@ public class MutationInitiator {
                     }
                     var position = new CommitLogPosition(segmentId, entryLocation);
                     if (handler.shouldRead(update.metadata().id, position)) {
-                        log.info("[mutation] handling an update: {}, at position: {}", update.metadata().id, position);
+                        log.info("[mutation] handling an update: {}, at position: {}",
+                                update.metadata().id, position);
 
                         for (var row : update) {
                             var map = new HashMap<String, Object>();
                             map.put("keyspace", tableMetadata.keyspace);
                             map.put("table", tableMetadata.name);
-                            map.put("partition_key", UTF8Type.instance.compose(update.partitionKey().getKey()));
+                            map.put("partition_key",
+                                    UTF8Type.instance.compose(update.partitionKey().getKey()));
                             map.put("clustering_key", row.clustering().toString(update.metadata()));
                             for (var cell : row.cells()) {
                                 var col = cell.column();
-                                map.put(col.name.toString(), col.type.getSerializer().deserialize(cell.buffer()));
+                                map.put(col.name.toString(),
+                                        col.type.getSerializer().deserialize(cell.buffer()));
                             }
                             var message = JsonMapper.toJson(map);
                             standardProducer.send(alarmTopic, message);
@@ -75,7 +79,6 @@ public class MutationInitiator {
                         handler.increaseReadCount();
                     }
                 }
-
 
             }
         };

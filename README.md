@@ -12,3 +12,18 @@
 ----
 ### TODO
 - Need to trigger Schema load a new keyspace & table while running.
+
+---
+### Testing
+#### INSERT
+1. Insert a new row into Alarm database
+![img.png](public/img_1.png)
+2. Handle insert mutation then publishing it into kafka topic
+![img.png](public/img_2.png)
+![img.png](public/img_3.png)
+#### UPDATE
+1. Update an exists Alarm row
+![img.png](public/img_4.png)
+2. Handle update mutation then publishing it into kafka topic
+![img.png](public/img_5.png)
+![img.png](public/img_6.png)

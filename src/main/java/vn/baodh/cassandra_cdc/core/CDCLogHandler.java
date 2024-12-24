@@ -10,7 +10,7 @@ import org.apache.cassandra.db.commitlog.IntervalSet;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.FBUtilities;
 import org.springframework.stereotype.Component;
-import vn.baodh.cassandra_cdc.mutation.MutationInitiator;
+import vn.baodh.cassandra_cdc.mutation.MutationParser;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -28,7 +28,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
 
     private static final int MAX_OUTSTANDING_CDC_COUNT = 1024;
 
-    private final MutationInitiator mutationInitiator;
+    private final MutationParser mutationParser;
 
     private long pendingMutationBytes;
 
@@ -38,8 +38,8 @@ public class CDCLogHandler implements CommitLogReadHandler {
 
     private final AtomicInteger readCount;
 
-    public CDCLogHandler(MutationInitiator mutationInitiator) {
-        this.mutationInitiator = mutationInitiator;
+    public CDCLogHandler(MutationParser mutationParser) {
+        this.mutationParser = mutationParser;
 
         this.pendingMutationBytes = 0;
         this.futures              = new ArrayDeque<>();
@@ -93,8 +93,7 @@ public class CDCLogHandler implements CommitLogReadHandler {
     public void handleMutation(Mutation m, int size, int entryLocation, CommitLogDescriptor desc) {
         if (DatabaseDescriptor.isCDCEnabled() && m.trackedByCDC()) {
             pendingMutationBytes += size;
-            futures.offer(
-                    mutationInitiator.initiateMutation(m, desc.id, size, entryLocation, this));
+            futures.offer(mutationParser.handleMutation(m, desc.id, size, entryLocation, this));
 
             // If there are finished mutations, or too many outstanding bytes/mutations,
             // drain the futures in the queue
