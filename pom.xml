@@ -56,6 +56,13 @@
         </dependency>
         <!---->
 
+        <!-- messaging -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <!---->
+
         <!-- misc -->
         <dependency>
             <groupId>org.projectlombok</groupId>

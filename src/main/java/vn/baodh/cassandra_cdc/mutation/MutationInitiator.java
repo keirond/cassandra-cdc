@@ -50,6 +50,8 @@ public class MutationInitiator {
 
                         for (var row : update) {
                             var map = new HashMap<String, Object>();
+                            map.put("partition_key", update.partitionKey().getKey().toString());
+                            map.put("clustering_key", row.clustering().toString(update.metadata()));
                             for (var cell : row.cells()) {
                                 var col = cell.column();
                                 map.put("keyspace", col.ksName);
