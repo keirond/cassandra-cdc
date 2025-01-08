@@ -42,7 +42,7 @@ spec:
     spec:
       containers:
         - name: cassandra-cdc
-          image: nexus.fnc.reg/vta/cassandra-cdc:08.01.2025.01
+          image: cassandra-cdc:08.01.2025.01
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

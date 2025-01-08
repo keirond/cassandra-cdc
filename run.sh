@@ -2,7 +2,7 @@
 # shellcheck disable=SC2001,SC2034,SC2155
 
 export NAMESPACE="ndl"
-export IMAGE="nexus.fnc.reg/vta/cassandra-cdc:08.01.2025.01"
+export IMAGE="cassandra-cdc:08.01.2025.01"
 export STATEFUL_SET_NAME="ndl-cassandra"
 export VOLUME_PREFIX="data-${STATEFUL_SET_NAME}"
 
