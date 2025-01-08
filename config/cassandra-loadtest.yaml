@@ -250,7 +250,7 @@ cidr_authorizer:
     # cidr_authorizer_mode: MONITOR
 
     # Refresh interval for CIDR groups cache, this value is considered in minutes
-    # cidr_groups_cache_refresh_interval: 5
+  # cidr_groups_cache_refresh_interval: 5
 
   # Maximum number of entries an IP to CIDR groups cache can accommodate
   # ip_cache_max_size: 100

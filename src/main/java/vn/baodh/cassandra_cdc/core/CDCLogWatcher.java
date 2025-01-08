@@ -36,7 +36,7 @@ public class CDCLogWatcher {
         }
 
         Schema.instance.loadFromDisk();
-        log.info(Schema.instance.getKeyspaces().toString());
+        log.info("[watcher] CDC keyspaces loaded: {}", Schema.instance.getKeyspaces().toString());
 
         var path = configuration.getLogPath();
         var cdcLocation =

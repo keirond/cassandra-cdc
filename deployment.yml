@@ -1,0 +1,132 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /actuator/prometheus
+    prometheus.io/port: "8000"
+    prometheus.io/scrape: "true"
+  name: cassandra-cdc-${VOLUME_INDEX}
+  namespace: ${NAMESPACE}
+  labels:
+    app: cassandra-cdc-${VOLUME_INDEX}
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+  selector:
+    app: cassandra-cdc-${VOLUME_INDEX}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cassandra-cdc-${VOLUME_INDEX}
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    matchLabels:
+      app: cassandra-cdc-${VOLUME_INDEX}
+  replicas: 1
+  minReadySeconds: 120
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  revisionHistoryLimit: 5
+  template:
+    metadata:
+      labels:
+        app: cassandra-cdc-${VOLUME_INDEX}
+    spec:
+      containers:
+        - name: cassandra-cdc
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: "/config/application.yml"
+          livenessProbe:
+            httpGet:
+              path: /swagger-ui/index.html#!
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /swagger-ui/index.html#!
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: cassandra-data
+              mountPath: /cassandra-data
+      volumes:
+        - name: config
+          configMap:
+            name: cassandra-cdc
+        - name: cassandra-data
+          persistentVolumeClaim:
+            claimName: ${PVC_NAME}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  name: cassandra-cdc-${VOLUME_INDEX}-ingress
+  namespace: ${NAMESPACE}
+spec:
+  rules:
+    - host: cassandra-cdc-${VOLUME_INDEX}.167.254.190.14.nip.io
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: cassandra-cdc-${VOLUME_INDEX}
+                port:
+                  number: 8080
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cassandra-cdc-${VOLUME_INDEX}
+  namespace: ${NAMESPACE}
+data:
+  application.yml: |
+    spring:
+      application:
+        name: cassandra-cdc
+    
+    cassandra:
+      cdc:
+        log-path: /cassandra-data/cdc_raw
+        table-includes:
+          - alarm
+    
+    # Messaging
+    messaging:
+      client:
+        ## Producer
+        producer:
+          bootstrap-servers: ndl-cp-kafka.ndl:9092
+          acks: all
+          linger-ms: 5
+          retries: 3
+          retry-backoff-ms: 100
+          enable-idempotence: true
+      
+      ## Produce
+      producers:
+        internal:
+          alarm-data:
+            topic: cassandra-cdc.post.alarm-data

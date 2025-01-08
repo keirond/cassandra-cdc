@@ -4,7 +4,7 @@ spring:
 
 cassandra:
   cdc:
-    log-path: /cassandra-data/cdc_raw
+    log-path: /home/baodh/cdc-lab/cassandra-data/cdc_raw
     table-includes:
       - alarm
 
@@ -13,7 +13,7 @@ messaging:
   client:
     ## Producer
     producer:
-      bootstrap-servers: ndl-cp-kafka.ndl:9092
+      bootstrap-servers: 10.20.3.62:9092
       acks: all
       linger-ms: 5
       retries: 3
