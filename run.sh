@@ -17,7 +17,7 @@ for PVC in $PVC_LIST; do
   export PVC_NAME=$(echo "$PVC" | cut -d'/' -f2)
   export VOLUME_INDEX=$(echo "$PVC_NAME" | sed "s/${VOLUME_PREFIX}-//")
 
-  #envsubst < deployment.yml | kubectl delete -f -
-  #envsubst < deployment.yml | kubectl apply -f -
-  envsubst < deployment.yml > deployment-cdc-"${VOLUME_INDEX}".yml
+  envsubst < deployment.yml | kubectl delete -f -
+  envsubst < deployment.yml | kubectl apply -f -
+  #envsubst < deployment.yml > deployment-cdc-"${VOLUME_INDEX}".yml
 done
