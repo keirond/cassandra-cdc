@@ -15,6 +15,7 @@ import vn.baodh.cassandra_cdc.common.JsonMapper;
 import vn.baodh.cassandra_cdc.configuration.CDCConfiguration;
 import vn.baodh.cassandra_cdc.core.CDCLogHandler;
 import vn.baodh.cassandra_cdc.messaging.producer.StandardProducer;
+import vn.baodh.cassandra_cdc.repository.AlarmRepository;
 
 import java.util.HashMap;
 import java.util.concurrent.Future;
@@ -27,6 +28,8 @@ public class MutationParser {
     private final CDCConfiguration cdcConfiguration;
 
     private final StandardProducer standardProducer;
+
+    private final AlarmRepository alarmRepository;
 
     @Value("${messaging.producers.internal.alarm-data.topic}")
     private String alarmTopic;
@@ -61,20 +64,21 @@ public class MutationParser {
                                 update.metadata().id, position);
 
                         for (var row : update) {
+                            var partitionKey =
+                                    UTF8Type.instance.compose(update.partitionKey().getKey());
                             var map = new HashMap<String, Object>();
                             map.put("keyspace", tableMetadata.keyspace);
                             map.put("table", tableMetadata.name);
-                            map.put("partition_key",
-                                    UTF8Type.instance.compose(update.partitionKey().getKey()));
+                            map.put("partition_key", partitionKey);
                             map.put("clustering_key", row.clustering().toString(update.metadata()));
-                            for (var cell : row.cells()) {
-                                var col = cell.column();
-                                map.put(col.name.toString(),
-                                        col.type.getSerializer().deserialize(cell.buffer()));
-                            }
-                            var message = JsonMapper.toJson(map);
-                            standardProducer.send(alarmTopic, message);
-                            log.info("[mutation] handled mutation data: {}", message);
+                            log.info("[mutation] handled mutation data: {}",
+                                    JsonMapper.toJson(map));
+
+                            alarmRepository.findByAlarmId(partitionKey).ifPresentOrElse(
+                                    alarm -> standardProducer.send(alarmTopic,
+                                            JsonMapper.toJson(alarm)), () -> log.info(
+                                            "[mutation] the mutation data with partition_key: {} is deleted",
+                                            partitionKey));
                         }
                         handler.increaseReadCount();
                     }

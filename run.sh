@@ -8,13 +8,16 @@ export VOLUME_PREFIX="data-${STATEFUL_SET_NAME}"
 
 # Get PVCs related to the StatefulSet
 PVC_LIST=$(kubectl get pvc -n $NAMESPACE -o name | grep $VOLUME_PREFIX)
+#PVC_LIST="persistentvolumeclaim/data-ndl-cassandra-0
+#persistentvolumeclaim/data-ndl-cassandra-1
+#persistentvolumeclaim/data-ndl-cassandra-2"
 
 # Deploy a CDC pod for each PVC
 for PVC in $PVC_LIST; do
-  export PVC_NAME="data-ndl-cassandra-1"
+  export PVC_NAME=$(echo "$PVC" | cut -d'/' -f2)
   export VOLUME_INDEX=$(echo "$PVC_NAME" | sed "s/${VOLUME_PREFIX}-//")
 
-  envsubst < deployment.yml | kubectl delete -f -
-  envsubst < deployment.yml | kubectl apply -f -
-  #envsubst < deployment.yml > deployment-"${VOLUME_INDEX}".yml
+  #envsubst < deployment.yml | kubectl delete -f -
+  #envsubst < deployment.yml | kubectl apply -f -
+  envsubst < deployment.yml > deployment-cdc-"${VOLUME_INDEX}".yml
 done

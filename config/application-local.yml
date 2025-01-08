@@ -2,6 +2,12 @@ spring:
   application:
     name: cassandra-cdc
 
+  cassandra:
+    contact-points: 172.23.152.11:9042
+    keyspace-name: cdc_testing
+    schema-action: create_if_not_exists
+    local-datacenter: datacenter1
+
 cassandra:
   cdc:
     log-path: /home/baodh/cdc-lab/cassandra-data/cdc_raw
@@ -24,4 +30,4 @@ messaging:
   producers:
     internal:
       alarm-data:
-        topic: cassandra-cdc.post.alarm-data
+        topic: alarmManager.response.alarmWebsocket

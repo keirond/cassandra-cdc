@@ -6,27 +6,27 @@ metadata:
     prometheus.io/path: /actuator/prometheus
     prometheus.io/port: "8000"
     prometheus.io/scrape: "true"
-  name: cassandra-cdc-${VOLUME_INDEX}
-  namespace: ${NAMESPACE}
+  name: cassandra-cdc-0
+  namespace: ndl
   labels:
-    app: cassandra-cdc-${VOLUME_INDEX}
+    app: cassandra-cdc-0
 spec:
   type: NodePort
   ports:
     - port: 8080
   selector:
-    app: cassandra-cdc-${VOLUME_INDEX}
+    app: cassandra-cdc-0
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cassandra-cdc-${VOLUME_INDEX}
-  namespace: ${NAMESPACE}
+  name: cassandra-cdc-0
+  namespace: ndl
 spec:
   selector:
     matchLabels:
-      app: cassandra-cdc-${VOLUME_INDEX}
+      app: cassandra-cdc-0
   replicas: 1
   minReadySeconds: 120
   strategy:
@@ -38,11 +38,11 @@ spec:
   template:
     metadata:
       labels:
-        app: cassandra-cdc-${VOLUME_INDEX}
+        app: cassandra-cdc-0
     spec:
       containers:
         - name: cassandra-cdc
-          image: ${IMAGE}
+          image: nexus.fnc.reg/vta/cassandra-cdc:08.01.2025.01
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -69,10 +69,10 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: cassandra-cdc-${VOLUME_INDEX}
+            name: cassandra-cdc-0
         - name: cassandra-data
           persistentVolumeClaim:
-            claimName: ${PVC_NAME}
+            claimName: data-ndl-cassandra-0
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -80,18 +80,18 @@ kind: Ingress
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
-  name: cassandra-cdc-${VOLUME_INDEX}-ingress
-  namespace: ${NAMESPACE}
+  name: cassandra-cdc-0-ingress
+  namespace: ndl
 spec:
   rules:
-    - host: cassandra-cdc-${VOLUME_INDEX}.167.254.190.14.nip.io
+    - host: cassandra-cdc-0.167.254.190.14.nip.io
       http:
         paths:
           - pathType: Prefix
             path: /
             backend:
               service:
-                name: cassandra-cdc-${VOLUME_INDEX}
+                name: cassandra-cdc-0
                 port:
                   number: 8080
 
@@ -99,8 +99,8 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cassandra-cdc-${VOLUME_INDEX}
-  namespace: ${NAMESPACE}
+  name: cassandra-cdc-0
+  namespace: ndl
 data:
   application.yml: |
     spring:
